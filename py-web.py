@@ -38,24 +38,24 @@ def newpage(driver, wait, home, parentnumber, cnumber, cname, ctype, csource, cr
         new_parent = driver.find_element(By.XPATH,
                                          "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumber + "')]")
         # new_parent.location_once_scrolled_into_view
-        driver.execute_script("arguments[0].click();", new_parent)
+        new_parent.click()
     except StaleElementReferenceException:
-        new_parent = driver.find_element(By.XPATH,
-                                         "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumber + "')]")
+        new_parent1 = driver.find_element(By.XPATH,
+                                          "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumber + "')]")
         # new_parent.location_once_scrolled_into_view
-        driver.execute_script("arguments[0].click();", new_parent)
+        new_parent1.click()
     except ElementClickInterceptedException:
         new_link = driver.find_element(By.XPATH,
                                        "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumber + "')]")
-        driver.execute_script("arguments[0].click();", new_link)
+        new_link.click()
     except NoSuchElementException:
-        js = 'document.getElementsByClassName("x-grid3-scroller")[0].scrollTop=200'
+        js = 'document.getElementsByClassName("x-grid3-scroller")[0].scrollTop=300'
         driver.execute_script(js)
     time.sleep(1)
     insert_new_button = driver.find_element(By.XPATH, "//button[contains(text(),'Insert New')]")
-    new_button_state = insert_new_button.get_attribute("aria-disabled")
-    print("new" + str(new_button_state))
-    if new_button_state:
+    new_button_state = insert_new_button.is_enabled()
+    # print("new" + str(new_button_state))
+    if new_button_state == False:
         return
     insert_new_button.click()
     wait.until(
@@ -142,20 +142,32 @@ def existpage(driver, wait, parentnumbere, number, eqty, etechpart):
     try:
         # print(parentnumbere)
         time.sleep(2)
-        wait.until(EC.element_to_be_clickable((By.XPATH,
-                                               "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumbere + "')]"))).click()
-    except StaleElementReferenceException:
-        driver.find_element(By.XPATH,
-                            "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumbere + "')]").click()
-    except ElementClickInterceptedException:
         link = driver.find_element(By.XPATH,
                                    "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumbere + "')]")
-        driver.execute_script("arguments[0].click();", link)
+        link.click()
+    except StaleElementReferenceException:
+        link1 = driver.find_element(By.XPATH,
+                                    "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumbere + "')]")
+        link1.click()
+    except ElementClickInterceptedException:
+        link2 = driver.find_element(By.XPATH,
+                                    "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumbere + "')]")
+        link2.click()
+    except NoSuchElementException:
+        js = 'document.getElementsByClassName("x-grid3-scroller")[0].scrollTop=300'
+        driver.execute_script(js)
     time.sleep(1)
     insert_exist_button = driver.find_element(By.XPATH, "//button[contains(text(),'Insert Existing')]")
-    enable_state = insert_exist_button.get_attribute("aria-disabled")
-    print(str(enable_state))
-    if enable_state:
+
+    # #enable_state = insert_exist_button.get_attribute("aria-disabled")    get_attribute does not work, do not know why.
+    # enable_state = insert_exist_button.is_enabled()
+    # print(str(enable_state))
+    # if enable_state == False:
+    #     return
+    insert_new_button = driver.find_element(By.XPATH, "//button[contains(text(),'Insert New')]")
+    new_button_state = insert_new_button.is_enabled()
+    print(str(new_button_state))
+    if new_button_state == False:
         return
     insert_exist_button.click()
 
