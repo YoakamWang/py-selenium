@@ -1,15 +1,15 @@
 import sys
 from selenium import webdriver
-from selenium.common import NoSuchWindowException, NoSuchElementException, StaleElementReferenceException
+from selenium.common import NoSuchWindowException, StaleElementReferenceException, ElementClickInterceptedException, \
+    TimeoutException, NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.edge.service import Service
 from selenium.webdriver.support import expected_conditions as EC
 import time
-
-from selenium.webdriver.support.expected_conditions import alert_is_present
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support.select import Select
 import pandas as pd
+from selenium.webdriver import ActionChains
 
 
 def initdriver():
@@ -33,14 +33,31 @@ def newpage(driver, wait, home, parentnumber, cnumber, cname, ctype, csource, cr
             cgatheringpart,
             ccriticalcharac, cqty, ctechpart):
     try:
-        wait.until(EC.element_to_be_clickable((By.XPATH,
-                                               "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumber + "')]"))).click()
+        time.sleep(1)
+        # print(parentnumber)
+        new_parent = driver.find_element(By.XPATH,
+                                         "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumber + "')]")
+        # new_parent.location_once_scrolled_into_view
+        driver.execute_script("arguments[0].click();", new_parent)
     except StaleElementReferenceException:
-        driver.find_element(By.XPATH,
-                            "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumber + "')]").click()
+        new_parent = driver.find_element(By.XPATH,
+                                         "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumber + "')]")
+        # new_parent.location_once_scrolled_into_view
+        driver.execute_script("arguments[0].click();", new_parent)
+    except ElementClickInterceptedException:
+        new_link = driver.find_element(By.XPATH,
+                                       "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumber + "')]")
+        driver.execute_script("arguments[0].click();", new_link)
+    except NoSuchElementException:
+        js = 'document.getElementsByClassName("x-grid3-scroller")[0].scrollTop=200'
+        driver.execute_script(js)
     time.sleep(1)
-    driver.find_element(By.XPATH, "//button[contains(text(),'Insert New')]").click()
-
+    insert_new_button = driver.find_element(By.XPATH, "//button[contains(text(),'Insert New')]")
+    new_button_state = insert_new_button.get_attribute("aria-disabled")
+    print("new" + str(new_button_state))
+    if new_button_state:
+        return
+    insert_new_button.click()
     wait.until(
         EC.number_of_windows_to_be(2)
     )
@@ -123,14 +140,25 @@ def newpage(driver, wait, home, parentnumber, cnumber, cname, ctype, csource, cr
 # for insert exist items
 def existpage(driver, wait, parentnumbere, number, eqty, etechpart):
     try:
+        # print(parentnumbere)
+        time.sleep(2)
         wait.until(EC.element_to_be_clickable((By.XPATH,
                                                "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumbere + "')]"))).click()
     except StaleElementReferenceException:
         driver.find_element(By.XPATH,
                             "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumbere + "')]").click()
+    except ElementClickInterceptedException:
+        link = driver.find_element(By.XPATH,
+                                   "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumbere + "')]")
+        driver.execute_script("arguments[0].click();", link)
     time.sleep(1)
-    time.sleep(1)
-    driver.find_element(By.XPATH, "//button[contains(text(),'Insert Existing')]").click()
+    insert_exist_button = driver.find_element(By.XPATH, "//button[contains(text(),'Insert Existing')]")
+    enable_state = insert_exist_button.get_attribute("aria-disabled")
+    print(str(enable_state))
+    if enable_state:
+        return
+    insert_exist_button.click()
+
     # existframe = wait.until(EC.visibility_of_element_located((By.XPATH, "//*[@id='ext-gen1']/iframe[2]")))
     # existframe = driver.find_element(By.XPATH, "//*[@id='ext-gen1']/iframe[2]")
     # driver.switch_to.frame(existframe)
@@ -141,13 +169,13 @@ def existpage(driver, wait, parentnumbere, number, eqty, etechpart):
 
     searchbutton = driver.find_element(By.XPATH, "//button[contains(text(),'Search')]")
     searchbutton.click()
-    time.sleep(3)
+    time.sleep(2)
     ok_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'OK')]")))
     # okbutton = driver.find_element(By.XPATH, "//button[contains(text(),'OK')]")
     ok_button.click()
     # action_chains = ActionChains(driver)
     # action_chains.double_click(ok_button).perform()
-    time.sleep(3)
+    time.sleep(2)
     add_qty_page = driver.find_elements(By.XPATH, "//span[contains(text(),'Edit Usage Attributes')]")
     if len(add_qty_page) == 1:
         qty_input = driver.find_element(By.XPATH,
@@ -161,7 +189,7 @@ def existpage(driver, wait, parentnumbere, number, eqty, etechpart):
         tech.send_keys(etechpart)
         time.sleep(1)
         driver.find_element(By.XPATH, "//button[contains(text(),'OK')]").click()
-    time.sleep(2)
+    time.sleep(2.5)
     confirm_no = driver.find_elements(By.XPATH, "//button[contains(text(),'No')]")
     if len(confirm_no) == 1:
         confirm_no_button = WebDriverWait(driver, 4).until(
@@ -218,7 +246,24 @@ def main():
         mwait.until(
             EC.presence_of_all_elements_located((By.XPATH, "//*[@class='x-tree3-node-text']"))
         )
+        # action_chain = ActionChains(mdriver)
+        icon_xpath = "//*[@style='width:16px;height:16px;background:url(https://pdmlink.niladv.org/Windchill/gwt/com.ptc.windchill.wncgwt.WncGWT/73C4E3626360BA866F88BA514C3354A8.cache.png) no-repeat -66px 0px;']"
+        trangle_icons = mdriver.find_elements(By.XPATH, icon_xpath)
+        while len(trangle_icons) > 0:
+            for icon in trangle_icons:
+                try:
+                    WebDriverWait(mdriver, 10).until(
+                        EC.visibility_of_all_elements_located((By.XPATH, icon_xpath)))
+                    mdriver.execute_script("arguments[0].click();", icon)
 
+                except StaleElementReferenceException:
+                    trangle_icons = mdriver.find_elements(By.XPATH, icon_xpath)
+                except TimeoutException:
+                    trangle_icons = mdriver.find_elements(By.XPATH, icon_xpath)
+                if len(trangle_icons) == 0:
+                    break
+
+            trangle_icons = mdriver.find_elements(By.XPATH, icon_xpath)
         for i in range(1, len(data['Level'])):
             # print(i, data['Level'][i])
             if int(data['Level'][i]) == int(data['Level'][i - 1]) + 1:
@@ -226,7 +271,7 @@ def main():
                 if data['Existing\n/New'][i] == 'Yes':
                     existpage(mdriver, mwait, data['Number'][i - 1], data['Number'][i], data['Qty'][i],
                               data['Technical Part'][i])
-                    # run the insert exist page
+                # run the insert exist page
                 else:
                     newpage(mdriver, mwait, mhome, data['Number'][i - 1], data['Number'][i], data['Name'][i],
                             data['Assembly Mode'][i].lower(),
@@ -235,7 +280,7 @@ def main():
                             data['Spare\n Part'][i],
                             data['Gathering Part'][i],
                             data['Critical Characteristic'][i], data['Qty'][i], data['Technical Part'][i])
-                    # run the insert new page i是当前行，i-1是父行
+            # run the insert new page i是当前行，i-1是父行
             elif int(data['Level'][i]) == int(data['Level'][i - 1]):
                 # print(i, "dddd")
                 for j in range(len(data['Level'][1:i]), -1, -1):
@@ -244,7 +289,7 @@ def main():
                         if data['Existing\n/New'][i] == 'Yes':
                             existpage(mdriver, mwait, data['Number'][j], data['Number'][i], data['Qty'][i],
                                       data['Technical Part'][i])
-                            # run the insert exist page
+                        # run the insert exist page
                         else:
                             # run the insert new page i是当前行，j是父行
                             newpage(mdriver, mwait, mhome, data['Number'][j], data['Number'][i], data['Name'][i],
@@ -279,26 +324,24 @@ def main():
 if __name__ == "__main__":
     main()
 
-# number=WebDriverWait(driver, 20).until(
-#     EC.element_to_be_clickable((By.XPATH, "//*[@id='number']"))
-# )
-# https://pdmlink.niladv.org/Windchill/app/#ptc1/tcomp/infoPage?ContainerOid=OR%3Awt.pdmlink.PDMLinkProduct%3A767792377&oid=OR%3Awt.folder.SubFolder%3A767792837&u8=1
-# Part https://pdmlink.niladv.org/Windchill/app/#ptc1/tcomp/infoPage?ContainerOid=OR%3Awt.pdmlink.PDMLinkProduct%3A767792377&oid=OR%3Awt.folder.SubFolder%3A767792837&u8=1
-# driver = initdriver()
-# driver.maximize_window()
-# driver.get(
-#     "https://pdmlink.niladv.org/Windchill/app/#ptc1/tcomp/infoPage?ContainerOid=OR%3Awt.pdmlink.PDMLinkProduct%3A767792377&oid=OR%3Awt.folder.SubFolder%3A767792837&u8=1")
-# driver.get(
-#     "https://pdmlink.niladv.org/Windchill/app/#ptc1/tcomp/infoPage?ContainerOid=OR%3Awt.pdmlink.PDMLinkProduct%3A767792377&oid=OR%3Awt.folder.SubFolder%3A767792837&u8=1")
-# wait = WebDriverWait(driver, 60)
-# home = driver.current_window_handle
+    # number=WebDriverWait(driver, 20).until(
+    #     EC.element_to_be_clickable((By.XPATH, "//*[@id='number']"))
+    # )
+    # https://pdmlink.niladv.org/Windchill/app/#ptc1/tcomp/infoPage?ContainerOid=OR%3Awt.pdmlink.PDMLinkProduct%3A767792377&oid=OR%3Awt.folder.SubFolder%3A767792837&u8=1
+    # Part https://pdmlink.niladv.org/Windchill/app/#ptc1/tcomp/infoPage?ContainerOid=OR%3Awt.pdmlink.PDMLinkProduct%3A767792377&oid=OR%3Awt.folder.SubFolder%3A767792837&u8=1
+    # driver = initdriver()
+    # driver.maximize_window()
+    # driver.get(
+    #     "https://pdmlink.niladv.org/Windchill/app/#ptc1/tcomp/infoPage?ContainerOid=OR%3Awt.pdmlink.PDMLinkProduct%3A767792377&oid=OR%3Awt.folder.SubFolder%3A767792837&u8=1")
+    # driver.get(
+    #     "https://pdmlink.niladv.org/Windchill/app/#ptc1/tcomp/infoPage?ContainerOid=OR%3Awt.pdmlink.PDMLinkProduct%3A767792377&oid=OR%3Awt.folder.SubFolder%3A767792837&u8=1")
+    # wait = WebDriverWait(driver, 60)
+    # home = driver.current_window_handle
 
+    # driver.quit()
 
-# driver.quit()
+    # items_identity = driver.find_elements(By.XPATH, "//*[@class='x-tree3-node-text']")
+    # insert exist frame //*[@id="ext-gen1"]/iframe[2]
+    # driver.find_element(By.XPATH, "//*[@class='x-grid3-scroller']//span[contains(text(),'" + 56 + "')]").click()
 
-# items_identity = driver.find_elements(By.XPATH, "//*[@class='x-tree3-node-text']")
-# insert exist frame //*[@id="ext-gen1"]/iframe[2]
-# driver.find_element(By.XPATH, "//*[@class='x-grid3-scroller']//span[contains(text(),'" + 56 + "')]").click()
-
-
-# buttons = driver.find_elements(By.XPATH, "//button[@class='x-btn-text ']")
+    # buttons = driver.find_elements(By.XPATH, "//button[@class='x-btn-text ']")
