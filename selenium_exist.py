@@ -47,7 +47,7 @@ def main():
                 data["Existing\n/New"][i] = 'Yes'
             else:
                 data["Existing\n/New"][i] = 'No'
-        data.to_excel("D:/PDMLink/56507E25 OPERATOR CAB SYSTEM.xlsx", sheet_name='Sheet1', index=False, header=True)
+        data.to_excel(file_path, sheet_name='Sheet1', index=False, header=True)
 
 
 if __name__ == "__main__":
