@@ -11,8 +11,6 @@ from selenium.webdriver.support import expected_conditions as EC
 
 def initdriver():
     s = Service(r'C:\sources\edgedriver_win64\msedgedriver.exe')
-    # driver = webdriver.Edge(executable_path=r'C:\sources\edgedriver_win64\msedgedriver.exe')
-    # driver.get("https://www.baidu.com")
     wdriver = webdriver.Edge(service=s)
     wdriver.maximize_window()
     url = "https://pdmlink.niladv.org/Windchill/app/"
@@ -36,19 +34,24 @@ def main():
         for i in range(1, len(data['Number'])):
             search_input.send_keys(data['Number'][i])
             search_input.send_keys(Keys.ENTER)
-            # // *[ @ id = "wt.fc.Persistable.defaultSearchViewfilterSelect"]
+            # element_to_be_clickable does not work, so change to visibility_of_element_located
             wait.until(
                 EC.visibility_of_element_located((By.XPATH,
                                                   "//*[@id='wt.fc.Persistable.defaultSearchViewfilterSelect']")))  # //a[contains(text(),'56508734')]/../../preceding-sibling::td[1]//img   小螺丝图片
 
             screw_icon = driver.find_elements(By.XPATH, "//a[contains(text(),'" + data['Number'][
                 i] + "')]/../../preceding-sibling::td[1]//img")
+            release_states = driver.find_elements(By.XPATH, "//a[contains(text(),'" + data['Number'][
+                i] + "')]/../../following-sibling::td[6]//div[@class='x-grid3-cell-inner x-grid3-col-state']")
             if len(screw_icon) > 0:
-                data["Existing\n/New"][i] = 'Yes'
+                for state in release_states:
+                    text = state.text
+                    data["Existing\n/New"][i] = text
             else:
-                data["Existing\n/New"][i] = 'No'
+                data["Existing\n/New"][i] = 'New'
         data.to_excel(file_path, sheet_name='Sheet1', index=False, header=True)
 
 
 if __name__ == "__main__":
     main()
+    print("Process completed!")
