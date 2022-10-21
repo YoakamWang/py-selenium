@@ -13,11 +13,13 @@ from selenium.webdriver.support import expected_conditions as EC
 def initdriver():
     s = Service(r'C:\sources\edgedriver_win64\msedgedriver.exe')
     wdriver = webdriver.Edge(service=s)
-    # wdriver.maximize_window()
-    wdriver.set_window_size(1925, 1085)
+    wdriver.maximize_window()
+    # print(wdriver.get_window_size())
+    #wdriver.set_window_size(1936, 1056)
+    #print(wdriver.get_window_size())
     url = "https://pdmlink.niladv.org/Windchill/app/"
     wdriver.get(url)
-    wwait = WebDriverWait(wdriver, 60)
+    wwait = WebDriverWait(wdriver, 40)
     return wdriver, wwait
 
 
@@ -40,17 +42,20 @@ def main():
             wait.until(
                 EC.visibility_of_element_located((By.XPATH,
                                                   "//*[@id='wt.fc.Persistable.defaultSearchViewfilterSelect']")))  # //a[contains(text(),'56508734')]/../../preceding-sibling::td[1]//img   小螺丝图片
-            time.sleep(2)
-            screw_icon = driver.find_elements(By.XPATH, "//a[contains(text(),'" + data['Number'][
-                i] + "')]/../../preceding-sibling::td[1]//img")
-            release_states = driver.find_elements(By.XPATH, "//a[contains(text(),'" + data['Number'][
-                i] + "')]/../../following-sibling::td[6]//div[@class='x-grid3-cell-inner x-grid3-col-state']")
-            if len(screw_icon) > 0:
-                for state in release_states:
-                    text = wait.until(
-                        EC.visibility_of_element_located((By.XPATH, "//a[contains(text(),'" + data['Number'][
-                            i] + "')]/../../following-sibling::td[6]//div[@class='x-grid3-cell-inner x-grid3-col-state']"))).text
-                    data["Existing\n/New"][i] = text
+            time.sleep(1.5)
+            ex_numbers = driver.find_elements(By.XPATH, "//a[contains(text(),'" + data['Number'][i] + "')]")
+            release_state = EC.visibility_of_element_located((By.XPATH, "//a[contains(text(),'" + data['Number'][
+                i] + "')]/../../following-sibling::td[6]//div[@class='x-grid3-cell-inner x-grid3-col-state']"))
+            # print(len(ex_numbers))
+            if len(ex_numbers) > 0:
+                for ex_number in ex_numbers:
+                    if ex_number.text == data['Number'][i]:
+                        text = ex_number.find_element(By.XPATH,
+                                                      "../../following-sibling::td[6]//div[@class='x-grid3-cell-inner x-grid3-col-state']").text
+                        # print(text)
+                        data["Existing\n/New"][i] = text
+                    else:
+                        data["Existing\n/New"][i] = 'New'
             else:
                 data["Existing\n/New"][i] = 'New'
         data.to_excel(file_path, sheet_name='Sheet1', index=False, header=True)
