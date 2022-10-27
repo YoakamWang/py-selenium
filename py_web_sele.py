@@ -9,7 +9,7 @@ import time
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support.select import Select
 import pandas as pd
-from selenium.webdriver import ActionChains, Keys
+from selenium.webdriver import Keys
 
 
 def initdriver():
@@ -59,16 +59,15 @@ def newpage(driver, wait, home, parentnumber, cnumber, cname, ctype, csource, cr
     except NoSuchElementException:
         js = 'document.getElementsByClassName("x-grid3-scroller")[0].scrollTop=300'
         driver.execute_script(js)
-    # time.sleep(2)
     wait.until(EC.visibility_of_element_located(
         (By.XPATH, "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumber + "')]")))
-    insert_new_button = wait.until(
-        EC.visibility_of_element_located((By.XPATH, "//button[contains(text(),'Insert New')]")))
     try:
         WebDriverWait(driver, 4).until(
             EC.element_attribute_to_include((By.XPATH, "//button[contains(text(),'Insert New')]"), 'disabled'))
     except TimeoutException:
         try:
+            insert_new_button = wait.until(
+                EC.visibility_of_element_located((By.XPATH, "//button[contains(text(),'Insert New')]")))
             insert_new_button.click()
         except ElementClickInterceptedException:
             insert_new_button = wait.until(
