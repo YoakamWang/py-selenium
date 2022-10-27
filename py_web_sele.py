@@ -55,7 +55,7 @@ def newpage(driver, wait, home, parentnumber, cnumber, cname, ctype, csource, cr
             cgatheringpart,
             ccriticalcharac, cqty, ctechpart):
     try:
-        click_parent(driver, parentnumber, wait)
+        click_parent(driver, parentnumber)
     except NoSuchElementException:
         js = 'document.getElementsByClassName("x-grid3-scroller")[0].scrollTop=300'
         driver.execute_script(js)
@@ -97,7 +97,10 @@ def newpage(driver, wait, home, parentnumber, cnumber, cname, ctype, csource, cr
             wait.until(EC.alert_is_present())
             driver.switch_to.alert.accept()
         finally:
-            reverison.send_keys(creversion)
+            if creversion == '' or creversion == 'xx.7':
+                reverison.send_keys("A")
+            else:
+                reverison.send_keys(creversion)
         branditem = driver.find_element(By.ID, "BrndMrkItm")
         Select(branditem).select_by_value("No marking")
         accessory = driver.find_element(By.ID, "org.niladv.accessory")
@@ -129,12 +132,12 @@ def newpage(driver, wait, home, parentnumber, cnumber, cname, ctype, csource, cr
                                                                          "//label[contains(text(),'*Quantity')]/../../following-sibling::td[1]//input")))  # complex locate element xpath
             qty_input_new.clear()
             qty_input_new.send_keys(cqty)
-            time.sleep(1)
+            time.sleep(1.5)
             tech_new = wait.until(EC.visibility_of_element_located((By.XPATH,
                                                                     "//label[contains(text(),'*Technical')]/../../following-sibling::td[1]//input")))
             tech_new.clear()
             tech_new.send_keys(ctechpart)
-            time.sleep(1)
+            time.sleep(1.5)
             driver.find_element(By.XPATH, "//button[contains(text(),'OK')]").click()
         except NoSuchWindowException:
             driver.switch_to.window(home)
@@ -146,12 +149,12 @@ def newpage(driver, wait, home, parentnumber, cnumber, cname, ctype, csource, cr
                                                                          "//label[contains(text(),'*Quantity')]/../../following-sibling::td[1]//input")))  # complex locate element xpath
             qty_input_new.clear()
             qty_input_new.send_keys(cqty)
-            time.sleep(1)
+            time.sleep(1.5)
             tech_new = wait.until(EC.visibility_of_element_located((By.XPATH,
                                                                     "//label[contains(text(),'*Technical')]/../../following-sibling::td[1]//input")))
             tech_new.clear()
             tech_new.send_keys(ctechpart)
-            time.sleep(1)
+            time.sleep(1.5)
             driver.find_element(By.XPATH, "//button[contains(text(),'OK')]").click()
         else:
             driver.switch_to.alert.accept()
@@ -169,7 +172,7 @@ def newpage(driver, wait, home, parentnumber, cnumber, cname, ctype, csource, cr
 
 def existpage(driver, wait, parentnumbere, number, eqty, etechpart):
     try:
-        click_parent(driver, parentnumbere, wait)
+        click_parent(driver, parentnumbere)
     except NoSuchElementException:
         js = 'document.getElementsByClassName("x-grid3-scroller")[0].scrollTop=300'
         driver.execute_script(js)
@@ -182,8 +185,8 @@ def existpage(driver, wait, parentnumbere, number, eqty, etechpart):
     # print(str(enable_state))
     # if enable_state == False:
     #     return
-    insert_new_button = driver.find_element(By.XPATH, "//button[contains(text(),'Insert New')]")
-    new_button_state = insert_new_button.get_attribute("disabled")
+    # insert_new_button = driver.find_element(By.XPATH, "//button[contains(text(),'Insert New')]")
+    # new_button_state = insert_new_button.get_attribute("disabled")
     # print(str(new_button_state))
     try:
         WebDriverWait(driver, 4).until(
@@ -191,8 +194,11 @@ def existpage(driver, wait, parentnumbere, number, eqty, etechpart):
     except TimeoutException:
         insert_exist_button = wait.until(
             EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Insert Existing')]")))
-        insert_exist_button.click()
-
+        try:
+            insert_exist_button.click()
+        except ElementClickInterceptedException:
+            ok_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'OK')]")))
+            ok_button.click()
         # existframe = wait.until(EC.visibility_of_element_located((By.XPATH, "//*[@id='ext-gen1']/iframe[2]")))
         # existframe = driver.find_element(By.XPATH, "//*[@id='ext-gen1']/iframe[2]")
         # driver.switch_to.frame(existframe)
@@ -211,7 +217,7 @@ def existpage(driver, wait, parentnumbere, number, eqty, etechpart):
             ok_button.click()
         except ElementClickInterceptedException:
             searchbutton.click()
-            time.sleep(1)
+            time.sleep(0.5)
             ok_button.click()
         # action_chains = ActionChains(driver)
         # action_chains.double_click(ok_button).perform()
@@ -222,14 +228,14 @@ def existpage(driver, wait, parentnumbere, number, eqty, etechpart):
                                                                      "//label[contains(text(),'*Quantity')]/../../following-sibling::td[1]//input")))  # loacte two same input fields
             qty_input.clear()
             qty_input.send_keys(eqty)
-            time.sleep(1)
+            time.sleep(1.5)
             tech = wait.until(EC.visibility_of_element_located((By.XPATH,
                                                                 "//label[contains(text(),'*Technical')]/../../following-sibling::td[1]//input")))
             tech.clear()
             tech.send_keys(etechpart)
-            time.sleep(1)
+            time.sleep(1.5)
             driver.find_element(By.XPATH, "//button[contains(text(),'OK')]").click()
-        time.sleep(1)
+        time.sleep(2)
         confirm_no = driver.find_elements(By.XPATH, "//button[contains(text(),'No')]")
         if len(confirm_no) == 1:
             confirm_no_button = WebDriverWait(driver, 4).until(
