@@ -27,7 +27,7 @@ def initdriver():
     return wdriver, wwait, whome
 
 
-def click_parent(driver, parentnumber, wait):
+def click_parent(driver, parentnumber):
     # all_links = wait.until(EC.visibility_of_all_elements_located((By.CLASS_NAME, 'x-tree3-node-text')))
     # print(len(all_links))
     # for link in all_links:
@@ -43,8 +43,9 @@ def click_parent(driver, parentnumber, wait):
     #                                 "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumber + "')]").click()
     search_parent = driver.find_element(By.XPATH, "//*[@class=' x-form-field-wrap  x-component x-border']/input")
     search_parent.clear()
-    print(parentnumber)
+    time.sleep(0.5)
     search_parent.send_keys(parentnumber)
+    time.sleep(0.5)
     search_parent.send_keys(Keys.ENTER)
 
 
@@ -63,12 +64,16 @@ def newpage(driver, wait, home, parentnumber, cnumber, cname, ctype, csource, cr
         (By.XPATH, "//*[@class='x-grid3-scroller']//span[contains(text(),'" + parentnumber + "')]")))
     insert_new_button = wait.until(
         EC.visibility_of_element_located((By.XPATH, "//button[contains(text(),'Insert New')]")))
-    new_button_state = insert_new_button.is_enabled()
-    # print("new" + str(new_button_state))
-    if new_button_state == False:
-        return
-    else:
-        insert_new_button.click()
+    try:
+        WebDriverWait(driver, 4).until(
+            EC.element_attribute_to_include((By.XPATH, "//button[contains(text(),'Insert New')]"), 'disabled'))
+    except TimeoutException:
+        try:
+            insert_new_button.click()
+        except ElementClickInterceptedException:
+            insert_new_button = wait.until(
+                EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Insert New')]")))
+            driver.execute_script("arguments[0].click();", insert_new_button)
         wait.until(
             EC.number_of_windows_to_be(2)
         )
@@ -114,8 +119,25 @@ def newpage(driver, wait, home, parentnumber, cnumber, cname, ctype, csource, cr
         finish_button = driver.find_element(By.ID, "ext-gen39")
         finish_button.click()
         try:
-            WebDriverWait(driver, 4).until(EC.alert_is_present())
+            WebDriverWait(driver, 5).until(EC.alert_is_present())
         except NoAlertPresentException:
+            driver.switch_to.window(home)
+            wait.until(EC.visibility_of_element_located((By.ID, 'psbIFrame')))
+            #     # Switch to the frame //Switch to base frame  switchTo().defaultContent()
+            driver.switch_to.frame('psbIFrame')
+            # edit_usage_page = driver.find_elements(By.XPATH, "//span[contains(text(),'Edit Usage Attributes')]")
+            qty_input_new = wait.until(EC.visibility_of_element_located((By.XPATH,
+                                                                         "//label[contains(text(),'*Quantity')]/../../following-sibling::td[1]//input")))  # complex locate element xpath
+            qty_input_new.clear()
+            qty_input_new.send_keys(cqty)
+            time.sleep(1)
+            tech_new = wait.until(EC.visibility_of_element_located((By.XPATH,
+                                                                    "//label[contains(text(),'*Technical')]/../../following-sibling::td[1]//input")))
+            tech_new.clear()
+            tech_new.send_keys(ctechpart)
+            time.sleep(1)
+            driver.find_element(By.XPATH, "//button[contains(text(),'OK')]").click()
+        except NoSuchWindowException:
             driver.switch_to.window(home)
             wait.until(EC.visibility_of_element_located((By.ID, 'psbIFrame')))
             #     # Switch to the frame //Switch to base frame  switchTo().defaultContent()
@@ -140,9 +162,12 @@ def newpage(driver, wait, home, parentnumber, cnumber, cname, ctype, csource, cr
             #     # Switch to the frame //Switch to base frame  switchTo().defaultContent()
             driver.switch_to.frame('psbIFrame')
             existpage(driver, wait, parentnumber, cnumber, cqty, ctechpart)
+    else:
+        return
+
+    # for insert exist items
 
 
-# for insert exist items
 def existpage(driver, wait, parentnumbere, number, eqty, etechpart):
     try:
         click_parent(driver, parentnumbere, wait)
@@ -159,11 +184,12 @@ def existpage(driver, wait, parentnumbere, number, eqty, etechpart):
     # if enable_state == False:
     #     return
     insert_new_button = driver.find_element(By.XPATH, "//button[contains(text(),'Insert New')]")
-    new_button_state = insert_new_button.is_enabled()
+    new_button_state = insert_new_button.get_attribute("disabled")
     # print(str(new_button_state))
-    if new_button_state == False:
-        return
-    else:
+    try:
+        WebDriverWait(driver, 4).until(
+            EC.element_attribute_to_include((By.XPATH, "//button[contains(text(),'Insert New')]"), 'disabled'))
+    except TimeoutException:
         insert_exist_button = wait.until(
             EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Insert Existing')]")))
         insert_exist_button.click()
@@ -204,7 +230,7 @@ def existpage(driver, wait, parentnumbere, number, eqty, etechpart):
             tech.send_keys(etechpart)
             time.sleep(1)
             driver.find_element(By.XPATH, "//button[contains(text(),'OK')]").click()
-        time.sleep(2)
+        time.sleep(1)
         confirm_no = driver.find_elements(By.XPATH, "//button[contains(text(),'No')]")
         if len(confirm_no) == 1:
             confirm_no_button = WebDriverWait(driver, 4).until(
@@ -228,6 +254,8 @@ def existpage(driver, wait, parentnumbere, number, eqty, etechpart):
         # Switch to the frame //Switch to base frame  switchTo().defaultContent()
         # //*[@class="x-tree3-node-text"] to locate the items in the Identity
         # driver.switch_to.frame("psbIFrame")
+    else:
+        return
 
 
 def getfile():
@@ -293,7 +321,7 @@ def main():
                     existpage(mdriver, mwait, data['Number'][i - 1], data['Number'][i], data['Qty'][i],
                               data['Technical Part'][i])
                 # run the insert exist page
-                else:
+                elif data['Existing\n/New'][i] == 'No':
                     newpage(mdriver, mwait, mhome, data['Number'][i - 1], data['Number'][i], data['Name'][i],
                             data['Assembly Mode'][i].lower(),
                             data['Source'][i].lower(),
@@ -304,14 +332,14 @@ def main():
             # run the insert new page i是当前行，i-1是父行
             elif int(data['Level'][i]) == int(data['Level'][i - 1]):
                 # print(i, "dddd")
-                for j in range(len(data['Level'][1:i]), -1, -1):
+                for j in range(i - 1, -1, -1):
                     if int(data['Level'][j]) == int(data['Level'][i]) - 1:
                         # print(j, data['Number'][j])
                         if data['Existing\n/New'][i] == 'Yes':
                             existpage(mdriver, mwait, data['Number'][j], data['Number'][i], data['Qty'][i],
                                       data['Technical Part'][i])
                         # run the insert exist page
-                        else:
+                        elif data['Existing\n/New'][i] == 'No':
                             # run the insert new page i是当前行，j是父行
                             newpage(mdriver, mwait, mhome, data['Number'][j], data['Number'][i], data['Name'][i],
                                     data['Assembly Mode'][i].lower(),
@@ -324,14 +352,15 @@ def main():
                         break
             elif int(data['Level'][i]) < int(data['Level'][i - 1]):
                 # print(i, "aaaa")
-                for jj in range(len(data['Level'][1:i]), -1, -1):
+                # for jj in range(len(data['Level'][1:i]), -1, -1):
+                for jj in range(i - 1, -1, -1):
                     if int(data['Level'][jj]) == int(data['Level'][i]) - 1:
                         # print(jj, data['Number'][jj])
                         if data['Existing\n/New'][i] == 'Yes':
                             # run the insert exist page
                             existpage(mdriver, mwait, data['Number'][jj], data['Number'][i], data['Qty'][i],
                                       data['Technical Part'][i])
-                        else:
+                        elif data['Existing\n/New'][i] == 'No':
                             # run the insert new page, i是当前行，jj是父行
                             newpage(mdriver, mwait, mhome, data['Number'][jj], data['Number'][i],
                                     data['Name'][i],
