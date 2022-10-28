@@ -97,7 +97,7 @@ def newpage(driver, wait, home, parentnumber, cnumber, cname, ctype, csource, cr
             wait.until(EC.alert_is_present())
             driver.switch_to.alert.accept()
         finally:
-            if creversion == '' or creversion == 'xx.7':
+            if pd.isna(creversion) or creversion == 'xx.7':
                 reverison.send_keys("A")
             else:
                 reverison.send_keys(creversion)
